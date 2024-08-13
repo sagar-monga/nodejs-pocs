@@ -20,7 +20,7 @@ fs.readFile(inputParentFilePath, "utf8", (err, parentData) => {
 	}
 
 	const data = JSON.parse(parentData);
-	const formattedParentObj = parseNestedJsonStrings(data);
+	const formattedParentObj = simpleParser(data);
 
 	fs.writeFile(
 		outputParentFilePath,
@@ -43,7 +43,7 @@ fs.readFile(inputChildFilePath, "utf8", (err, parentData) => {
 	}
 
 	const data = JSON.parse(parentData);
-	const formattedChildObj = parseNestedJsonStrings(data);
+	const formattedChildObj = simpleParser(data);
 
 	fs.writeFile(
 		outputChildFilePath,
@@ -59,6 +59,39 @@ fs.readFile(inputChildFilePath, "utf8", (err, parentData) => {
 	);
 });
 
+const simpleParser = (json) => {
+	const parseObj = (obj) => {
+		for (const key in obj) {
+			if (typeof obj[key] === "string" && isValidJson(obj[key])) {
+				try {
+					const parsed = JSON.parse(obj[key])
+					obj[key] = parseObj(parsed);
+				} catch (e) {
+					console.error(`Parse Error: ${e}`);
+				}
+			}
+			else if(typeof obj[key] === "object") {
+				parseObj(obj[key]);
+			}
+		}
+		return obj;
+	}
+
+	return parseObj(json);
+}
+
+const isValidJson = (data) => {
+	if (typeof data !== "string") return false;
+
+	try {
+		const parsed = JSON.parse(data);
+		if (typeof parsed == "object") return true;
+	} catch (e) {
+		return false;
+	}
+	return false
+}
+
 const parseNestedJsonStrings = (data) => {
 	const parseObject = (obj) => {
 		if (obj !== null && typeof obj === "object") {
@@ -68,7 +101,7 @@ const parseNestedJsonStrings = (data) => {
 						const parsedValue = JSON.parse(obj[key]);
 						obj[key] = parseObject(parsedValue);
 					} catch (e) {
-            // TODO: fix this. Commenting because throws error for non-object string fields.
+						// TODO: fix this. Commenting because throws error for non-object string fields.
 						// console.error(`Parsing error: ${e}`);
 					}
 				} else if (typeof obj[key] === "object") {
