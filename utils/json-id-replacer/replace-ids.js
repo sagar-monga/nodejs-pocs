@@ -13,7 +13,7 @@ fs.readFile(jsonFilePath, 'utf8', (err, jsonData) => {
         return;
     }
 
-    const jsonObjects = JSON.parse(jsonData);
+    const jsonObject = JSON.parse(jsonData);
 
     // Read the IDs file
     fs.readFile(idsFilePath, 'utf8', (err, idsData) => {
@@ -24,18 +24,14 @@ fs.readFile(jsonFilePath, 'utf8', (err, jsonData) => {
 
         const newIds = idsData.trim().split('\n');
 
-        if (newIds.length !== jsonObjects.length) {
-            console.error('The number of IDs does not match the number of JSON objects.');
-            return;
-        }
-
-        // Replace IDs in JSON objects
-        jsonObjects.forEach((obj, index) => {
-            obj.id = newIds[index];
+        const updated_data = newIds.map(item => {
+            const newObject = {...jsonObject};
+            newObject.id = item;
+            return newObject;
         });
 
         // Write updated JSON to a new file
-        fs.writeFile(outputFilePath, JSON.stringify(jsonObjects, null, 4), 'utf8', (err) => {
+        fs.writeFile(outputFilePath, JSON.stringify(updated_data, null, 4), 'utf8', (err) => {
             if (err) {
                 console.error('Error writing updated JSON file:', err);
                 return;
